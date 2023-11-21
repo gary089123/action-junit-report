@@ -3,6 +3,7 @@ import * as github from '@actions/github'
 import {annotateTestResult, attachSummary} from './annotator'
 import {parseTestReports, TestResult} from './testParser'
 import {readTransformers, retrieve} from './utils'
+import {readImageJson} from './imageReader'
 
 export async function run(): Promise<void> {
   try {
@@ -37,6 +38,7 @@ export async function run(): Promise<void> {
     const transformers = readTransformers(core.getInput('transformers', {trimWhitespace: true}))
     const followSymlink = core.getBooleanInput('follow_symlink')
     const annotationsLimit = Number(core.getInput('annotations_limit') || -1)
+    const screenshotPaths = core.getInput('screenshot_paths')
 
     if (excludeSources.length === 0) {
       excludeSources = ['/build/', '/__pycache__/']
@@ -57,6 +59,8 @@ export async function run(): Promise<void> {
       passed: 0,
       annotations: []
     }
+
+    const screenshots = readImageJson(screenshotPaths)
 
     core.info(`Retrieved ${reportsCount} reports to process.`)
 
@@ -119,7 +123,7 @@ export async function run(): Promise<void> {
     const supportsJobSummary = process.env['GITHUB_STEP_SUMMARY']
     if (jobSummary && supportsJobSummary) {
       try {
-        await attachSummary(testResults, detailedSummary, includePassed)
+        await attachSummary(testResults, detailedSummary, includePassed, screenshots)
       } catch (error) {
         core.error(`❌ Failed to set the summary using the provided token. (${error})`)
       }

@@ -108,7 +108,8 @@ export async function annotateTestResult(
 export async function attachSummary(
   testResults: TestResult[],
   detailedSummary: boolean,
-  includePassed: boolean
+  includePassed: boolean,
+  screenshots: Map<string, string>
 ): Promise<void> {
   const table: SummaryTableRow[] = [
     [
@@ -124,7 +125,9 @@ export async function attachSummary(
     [
       {data: '', header: true},
       {data: 'Test', header: true},
-      {data: 'Result', header: true}
+      {data: 'Result', header: true},
+      {data: 'Message', header: true},
+      {data: 'Screenshot', header: true}
     ]
   ]
 
@@ -151,6 +154,8 @@ export async function attachSummary(
         detailsTable.push([`-`, `No test annotations available`, `-`])
       } else {
         for (const annotation of annotations) {
+          const screenshot = screenshots.get(annotation.title)
+
           detailsTable.push([
             `${testResult.checkName}`,
             `${annotation.title}`,
@@ -160,7 +165,9 @@ export async function attachSummary(
                 : annotation.status === 'skipped'
                 ? `⏭️ skipped`
                 : `❌ ${annotation.annotation_level}`
-            }`
+            }`,
+            `${annotation.message}`,
+            `${screenshot !== undefined ? `<img src="${screenshot}"></img>` : `NA`}`
           ])
         }
       }
