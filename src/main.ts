@@ -60,7 +60,7 @@ export async function run(): Promise<void> {
       annotations: []
     }
 
-    const screenshots = readImageJson(screenshotPaths)
+    const imageResult = await readImageJson(screenshotPaths)
 
     core.info(`Retrieved ${reportsCount} reports to process.`)
 
@@ -123,7 +123,7 @@ export async function run(): Promise<void> {
     const supportsJobSummary = process.env['GITHUB_STEP_SUMMARY']
     if (jobSummary && supportsJobSummary) {
       try {
-        await attachSummary(testResults, detailedSummary, includePassed, screenshots)
+        await attachSummary(testResults, detailedSummary, includePassed, imageResult.screenshots)
       } catch (error) {
         core.error(`❌ Failed to set the summary using the provided token. (${error})`)
       }

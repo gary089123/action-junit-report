@@ -110,7 +110,7 @@ function annotateTestResult(testResult, token, headSha, annotateOnly, updateChec
     });
 }
 exports.annotateTestResult = annotateTestResult;
-function attachSummary(testResults, detailedSummary, includePassed) {
+function attachSummary(testResults, detailedSummary, includePassed, screenshots) {
     return __awaiter(this, void 0, void 0, function* () {
         const table = [
             [
@@ -125,7 +125,9 @@ function attachSummary(testResults, detailedSummary, includePassed) {
             [
                 { data: '', header: true },
                 { data: 'Test', header: true },
-                { data: 'Result', header: true }
+                { data: 'Result', header: true },
+                { data: 'Message', header: true },
+                { data: 'Screenshot', header: true }
             ]
         ];
         for (const testResult of testResults) {
@@ -146,6 +148,7 @@ function attachSummary(testResults, detailedSummary, includePassed) {
                 }
                 else {
                     for (const annotation of annotations) {
+                        const screenshot = screenshots.get(annotation.title);
                         detailsTable.push([
                             `${testResult.checkName}`,
                             `${annotation.title}`,
@@ -153,7 +156,9 @@ function attachSummary(testResults, detailedSummary, includePassed) {
                                 ? '✅ pass'
                                 : annotation.status === 'skipped'
                                     ? `⏭️ skipped`
-                                    : `❌ ${annotation.annotation_level}`}`
+                                    : `❌ ${annotation.annotation_level}`}`,
+                            `${annotation.message}`,
+                            `${screenshot !== undefined ? `<img src="${screenshot}"></img>` : `NA`}`
                         ]);
                     }
                 }
@@ -166,6 +171,98 @@ function attachSummary(testResults, detailedSummary, includePassed) {
     });
 }
 exports.attachSummary = attachSummary;
+
+
+/***/ }),
+
+/***/ 973:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.readImageJson = void 0;
+const fs = __importStar(__nccwpck_require__(7147));
+const core = __importStar(__nccwpck_require__(2186));
+const glob = __importStar(__nccwpck_require__(8090));
+function readImageJson(imageJsonPaths) {
+    var _a, e_1, _b, _c;
+    return __awaiter(this, void 0, void 0, function* () {
+        const globber = yield glob.create(imageJsonPaths, { followSymbolicLinks: false });
+        const screenshotsMap = new Map();
+        try {
+            for (var _d = true, _e = __asyncValues(globber.globGenerator()), _f; _f = yield _e.next(), _a = _f.done, !_a; _d = true) {
+                _c = _f.value;
+                _d = false;
+                const file = _c;
+                const data = fs.readFileSync(file, 'utf8');
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                let report;
+                try {
+                    report = JSON.parse(data);
+                    for (const key in report) {
+                        if (report.hasOwnProperty(key)) {
+                            screenshotsMap.set(key, report[key]);
+                        }
+                    }
+                }
+                catch (error) {
+                    core.error(`⚠️ Failed to parse file (${file}) with error ${error}`);
+                }
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+        return {
+            screenshots: screenshotsMap
+        };
+    });
+}
+exports.readImageJson = readImageJson;
 
 
 /***/ }),
@@ -214,6 +311,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const annotator_1 = __nccwpck_require__(1365);
 const testParser_1 = __nccwpck_require__(1465);
 const utils_1 = __nccwpck_require__(918);
+const imageReader_1 = __nccwpck_require__(973);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -245,6 +343,7 @@ function run() {
             const transformers = (0, utils_1.readTransformers)(core.getInput('transformers', { trimWhitespace: true }));
             const followSymlink = core.getBooleanInput('follow_symlink');
             const annotationsLimit = Number(core.getInput('annotations_limit') || -1);
+            const screenshotPaths = core.getInput('screenshot_paths');
             if (excludeSources.length === 0) {
                 excludeSources = ['/build/', '/__pycache__/'];
             }
@@ -261,6 +360,7 @@ function run() {
                 passed: 0,
                 annotations: []
             };
+            const imageResult = yield (0, imageReader_1.readImageJson)(screenshotPaths);
             core.info(`Retrieved ${reportsCount} reports to process.`);
             for (let i = 0; i < reportsCount; i++) {
                 const testResult = yield (0, testParser_1.parseTestReports)((0, utils_1.retrieve)('checkName', checkName, i, reportsCount), (0, utils_1.retrieve)('summary', summary, i, reportsCount), (0, utils_1.retrieve)('reportPaths', reportPaths, i, reportsCount), (0, utils_1.retrieve)('suiteRegex', suiteRegex, i, reportsCount), includePassed && annotateNotice, checkRetries, excludeSources, (0, utils_1.retrieve)('checkTitleTemplate', checkTitleTemplate, i, reportsCount), (0, utils_1.retrieve)('testFilesPrefix', testFilesPrefix, i, reportsCount), transformers, followSymlink, annotationsLimit);
@@ -301,7 +401,7 @@ function run() {
             const supportsJobSummary = process.env['GITHUB_STEP_SUMMARY'];
             if (jobSummary && supportsJobSummary) {
                 try {
-                    yield (0, annotator_1.attachSummary)(testResults, detailedSummary, includePassed);
+                    yield (0, annotator_1.attachSummary)(testResults, detailedSummary, includePassed, imageResult.screenshots);
                 }
                 catch (error) {
                     core.error(`❌ Failed to set the summary using the provided token. (${error})`);
@@ -485,7 +585,19 @@ function parseFile(file, suiteRegex = '', annotatePassed = false, checkRetries =
     return __awaiter(this, void 0, void 0, function* () {
         core.debug(`Parsing file ${file}`);
         const data = fs.readFileSync(file, 'utf8');
-        const report = JSON.parse(parser.xml2json(data, { compact: true }));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let report;
+        try {
+            report = JSON.parse(parser.xml2json(data, { compact: true }));
+        }
+        catch (error) {
+            core.error(`⚠️ Failed to parse file (${file}) with error ${error}`);
+            return {
+                totalCount: 0,
+                skipped: 0,
+                annotations: []
+            };
+        }
         return parseSuite(report, '', suiteRegex, annotatePassed, checkRetries, excludeSources, checkTitleTemplate, testFilesPrefix, transformer, followSymlink, annotationsLimit);
     });
 }

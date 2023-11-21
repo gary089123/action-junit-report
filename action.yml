@@ -96,6 +96,9 @@ inputs:
   annotations_limit:
     description: 'Specify the limit for annotations. This will also interrupt parsing all test-suites if the limit is reached.'
     required: false
+  screenshot_paths:
+    description: 'json file for screenshot url, key should same with title'
+    required: false
 runs:
   using: 'node20'
   main: 'dist/index.js'
